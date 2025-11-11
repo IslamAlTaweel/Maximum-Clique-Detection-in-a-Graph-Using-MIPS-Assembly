@@ -1,4 +1,4 @@
-//brute force implementation from geeks for geeks 
+//maximum clique brute force implementation in C (Source: geeksforgeeks) 
 
 #include <stdio.h>
 #include <stdlib.h>
