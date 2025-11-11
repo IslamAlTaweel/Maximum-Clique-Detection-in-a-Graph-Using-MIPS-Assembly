@@ -3,77 +3,105 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define MAX 100
+#define MAX_VERTICES 100
 
-// Stores the vertices
-int store[MAX], n;
+// Array to store the current subset of vertices being checked
+int currentSubset[MAX_VERTICES];
 
-// Graph
-int graph[MAX][MAX];
+// Number of vertices in the graph
+int numVertices;
 
-// Degree of the vertices
-int d[MAX];
+// Adjacency matrix representing the graph
+int adjacencyMatrix[MAX_VERTICES][MAX_VERTICES];
 
-// Helper function to return max of two integers
+// Degree of each vertex (optional, can be used for heuristics)
+int vertexDegree[MAX_VERTICES];
+
+// Helper function to return the maximum of two integers
 int max(int a, int b)
 {
     return (a > b) ? a : b;
 }
 
-// Function to check if the given set of
-// vertices in store array is a clique or not
-int is_clique(int b)
+// Function to check if the vertices in currentSubset form a clique
+// 'subsetSize' is the number of vertices in the subset
+int isClique(int subsetSize)
 {
-    int i, j;
-    for (i = 1; i < b; i++)
+    for (int i = 1; i < subsetSize; i++)
     {
-        for (j = i + 1; j < b; j++)
+        for (int j = i + 1; j < subsetSize; j++)
         {
-            // If any edge is missing
-            if (graph[store[i]][store[j]] == 0)
-                return 0;
+            // If there is no edge between any pair of vertices, it's not a clique
+            if (adjacencyMatrix[currentSubset[i]][currentSubset[j]] == 0)
+                return 0; // Not a clique
         }
     }
-    return 1;
+    return 1; // All pairs are connected -> clique
 }
 
-// Function to find all the sizes of maximal cliques
-int maxCliques(int i, int l)
+// Recursive function to find the size of the largest clique
+// 'lastVertex' is the index of the last vertex added to currentSubset
+// 'currentSize' is the number of vertices currently in currentSubset
+int findMaxClique(int lastVertex, int currentSize)
 {
-    int max_ = 0;
-    int j;
+    int maxSizeFound = 0;
 
-    for (j = i + 1; j <= n; j++)
+    // Try to add each remaining vertex to the current subset
+    for (int nextVertex = lastVertex + 1; nextVertex <= numVertices; nextVertex++)
     {
-        store[l] = j;
+        currentSubset[currentSize] = nextVertex; // Add vertex to subset
 
-        if (is_clique(l + 1))
+        // Only proceed if the new subset is still a clique
+        if (isClique(currentSize + 1))
         {
-            max_ = max(max_, l);
-            max_ = max(max_, maxCliques(j, l + 1));
+            // Update maximum clique size found so far
+            maxSizeFound = max(maxSizeFound, currentSize);
+
+            // Recursively try to add more vertices
+            maxSizeFound = max(maxSizeFound, findMaxClique(nextVertex, currentSize + 1));
         }
     }
-    return max_;
+    return maxSizeFound;
 }
 
-// Driver code
 int main()
 {
-    int edges[][2] = { {1, 2}, {2, 3}, {3, 1}, {4, 3}, {4, 1}, {4, 2} };
-    int size = sizeof(edges) / sizeof(edges[0]);
-    int i;
-
-    n = 4;
-
-    for (i = 0; i < size; i++)
+    // List of edges (1-based indexing)
+    int edges[][2] =
     {
-        graph[edges[i][0]][edges[i][1]] = 1;
-        graph[edges[i][1]][edges[i][0]] = 1;
-        d[edges[i][0]]++;
-        d[edges[i][1]]++;
+        {1, 2}, {2, 3}, {3, 1},
+        {4, 3}, {4, 1}, {4, 2}
+    };
+    int numEdges = sizeof(edges) / sizeof(edges[0]);
+
+    numVertices = 4; // Number of vertices in the graph
+
+    // Initialize adjacency matrix and vertex degrees
+    for (int i = 0; i < numVertices + 1; i++)
+    {
+        for (int j = 0; j < numVertices + 1; j++)
+        {
+            adjacencyMatrix[i][j] = 0;
+        }
+        vertexDegree[i] = 0;
     }
 
-    printf("%d\n", maxCliques(0, 1));
+    // Populate adjacency matrix based on the edges
+    for (int i = 0; i < numEdges; i++)
+    {
+        int u = edges[i][0];
+        int v = edges[i][1];
+
+        adjacencyMatrix[u][v] = 1;
+        adjacencyMatrix[v][u] = 1;
+
+        vertexDegree[u]++;
+        vertexDegree[v]++;
+    }
+
+    // Find and print the size of the maximum clique
+    int maxCliqueSize = findMaxClique(0, 1);
+    printf("Maximum clique size: %d\n", maxCliqueSize);
 
     return 0;
 }
