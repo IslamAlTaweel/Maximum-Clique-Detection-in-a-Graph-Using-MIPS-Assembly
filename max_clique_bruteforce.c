@@ -53,8 +53,8 @@ void load_file(char filename[])
         exit(1);
     }
 
-    int num_Vertices_in_Rows[MAX_VERTICES];
-    int num_Vertices_in_columns = 0;
+    int num_Vertices_in_Rows[MAX_VERTICES]; //array to hold num of vertices in every row(for validation)
+    int num_Vertices_in_columns = 0; 
     char line[20];
     int cnt = 0;
 
