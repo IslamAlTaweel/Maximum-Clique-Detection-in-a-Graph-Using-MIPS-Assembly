@@ -159,16 +159,20 @@ void load_file(char filename[])
     numVertices = cnt; // Set global vertex count
     fclose(fpt_in);
 }
-
 int main()
 {
-    char filename[50];
-    // Prompt user to enter file name/path
-    printf("Enter adjacency matrix file name: ");
-    scanf("%s", filename);
+    char inputFile[50];
+    char outputFile[50];
+
+    // Prompt user to enter input and output file names
+    printf("Enter adjacency matrix input file name: ");
+    scanf("%s", inputFile);
+
+    printf("Enter output file name: ");
+    scanf("%s", outputFile);
 
     // Load adjacency matrix from file
-    load_file(filename);
+    load_file(inputFile);
 
     // Find the maximum clique
     int maxCliqueSize = 0;
@@ -178,21 +182,37 @@ int main()
         maxCliqueSize = max(maxCliqueSize, findMaxClique(i, 1));
     }
 
-    // Output the result
+    // Open output file
+    FILE *fpt_out = fopen(outputFile, "w");
+    if (!fpt_out)
+    {
+        printf("Error: Could not open output file '%s'\n", outputFile);
+        return 1;
+    }
+
+    // Output the result to console and file
     if (maxCliqueSizeGlobal == 0)
     {
         printf("No clique found in the graph.\n");
+        fprintf(fpt_out, "No clique found in the graph.\n");
     }
     else
     {
         printf("Maximum clique size: %d\n", maxCliqueSizeGlobal);
+        fprintf(fpt_out, "Maximum clique size: %d\n", maxCliqueSizeGlobal);
+
         printf("Vertices in the clique: ");
+        fprintf(fpt_out, "Vertices in the clique: ");
+
         for (int i = 0; i < maxCliqueSizeGlobal; i++)
         {
             printf("%d ", maxCliqueSubset[i]); // Print 0-based vertex labels
+            fprintf(fpt_out, "%d ", maxCliqueSubset[i]);
         }
         printf("\n");
+        fprintf(fpt_out, "\n");
     }
 
+    fclose(fpt_out); // Close the output file
     return 0;
 }
