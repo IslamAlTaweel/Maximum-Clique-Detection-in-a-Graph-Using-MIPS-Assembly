@@ -34,13 +34,18 @@ int isClique(int subsetSize)
     {
         for (int j = i + 1; j < subsetSize; j++)
         {
-            // If there is no edge between any pair of vertices, it's not a clique
-            if (adjacencyMatrix[currentSubset[i]][currentSubset[j]] == 0)
-                return 0;
+            // For undirected graph, matrix should be symmetric
+            // Check that both vertices are connected
+            if (adjacencyMatrix[currentSubset[i]][currentSubset[j]] == 0 ||
+                adjacencyMatrix[currentSubset[j]][currentSubset[i]] == 0)
+            {
+                return 0; // Not a clique
+            }
         }
     }
     return 1; // All pairs are connected -> clique
 }
+
 
 // Recursive function to find the size of the largest clique
 // 'lastVertex' is the index of the last vertex added to currentSubset
@@ -191,7 +196,8 @@ int main()
     }
 
     // Output the result to console and file
-    if (maxCliqueSizeGlobal == 0)
+    // Treat only cliques of size >= 2 as valid
+    if (maxCliqueSizeGlobal < 2)
     {
         printf("No clique found in the graph.\n");
         fprintf(fpt_out, "No clique found in the graph.\n");
@@ -216,3 +222,4 @@ int main()
     fclose(fpt_out); // Close the output file
     return 0;
 }
+
