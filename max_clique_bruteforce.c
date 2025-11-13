@@ -37,7 +37,7 @@ int isClique(int subsetSize)
             // For undirected graph, matrix should be symmetric
             // Check that both vertices are connected
             if (adjacencyMatrix[currentSubset[i]][currentSubset[j]] == 0 ||
-                adjacencyMatrix[currentSubset[j]][currentSubset[i]] == 0)
+                    adjacencyMatrix[currentSubset[j]][currentSubset[i]] == 0)
             {
                 return 0; // Not a clique
             }
@@ -159,6 +159,21 @@ void load_file(char filename[])
         printf("Error: Invalid adjacency matrix (not n × n)\n");
         fclose(fpt_in);
         exit(1);
+    }
+
+    // Symmetry check for undirected graph
+    for (int i = 0; i < cnt; i++)
+    {
+        for (int j = 0; j < cnt; j++)
+        {
+            if (adjacencyMatrix[i][j] != adjacencyMatrix[j][i])
+            {
+                printf("Error: Adjacency matrix is not symmetric at (%d,%d) and (%d,%d)\n",
+                       i, j, j, i);
+                fclose(fpt_in);
+                exit(1);
+            }
+        }
     }
 
     numVertices = cnt; // Set global vertex count
