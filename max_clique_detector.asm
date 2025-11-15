@@ -1,0 +1,59 @@
+# Maximum Clique Detection in MIPS Assembly
+# Islam Zayed : 1230007
+# Batol Abu Samhadana : 1230738
+# Objective: Detects the maximum clique in an adjacency matrix
+# - Flexible program for a matrix up to 5 vertices
+# - Adjacency matrix validation ( nxn , 0/1 entries , matrix symmetry )
+# - Brute force recursive approach to detect maximum clique
+# Input : Request adjacency matrix input file
+# Output : Writes maximum clique size and its vertices to console and to output.txt
+################################# Data Segment ####################################
+.data
+# I/O buffers
+# - buffers needed for file names
+input_filename:  .space 64
+output_filename: .asciiz	 "output.txt"	#fixed output file
+
+# Buffers
+# - line buffer needed for reading 
+line_buffer: .space 64
+# - converts int to ascii for printing
+int_string_buffer .space 40 
+
+# messages to display to user 
+input_prompt_msg: .asciiz "Please enter the adjacency matrix input file name:\n"
+file_error_msg: .asciiz "Error! Could not open input file!\n"
+matrix_error_msg: .asciiz "Error! Invalid Adjacency Matrix!\n"
+no_clique_msg: .asciiz "No clique found in the graph!\n"
+max_size_msg: .asciiz "Maximum Clique Size: "
+max_vertices_msg: .asciiz "Vertices in the Maximum Clique: "
+newline: .asciiz "\n"
+
+# constants and arrays
+MAX_VERTICES .word 5 	# maximum allowable n number of vertices
+adj_matrix .space 5*5*4 	#(nxn ints for n <=5)
+current_subset .space 5*4
+max_clique_subset .space 5*4
+num_matrix_vertices .word 0
+max_clique_size .word 0
+
+################################# Code Segment ####################################
+.text
+.globl main
+main:
+	# prompt user for input file	# display prompt string:
+	la $a0, input_prompt_msg	# - $a0 = address of input_prompt_msg
+	li $v0, 4			# - print string input_prompt_msg
+	syscall
+	# read input file name from user
+	la $a0, input_filename		# #a0 = address of input_filename
+	li $a1, 64			# $a1 = max string length
+	li $v0, 8			# read string 
+	syscall
+
+
+
+
+
+
+
