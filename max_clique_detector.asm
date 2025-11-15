@@ -9,12 +9,11 @@
 # Output : Writes maximum clique size and its vertices to console and to output.txt
 ################################# Data Segment ####################################
 .data
+# Buffers
 # I/O buffers
 # - buffers needed for file names
 input_filename:  .space 64
 output_filename: .asciiz	 "output.txt"	#fixed output file
-
-# Buffers
 # - line buffer needed for reading 
 line_buffer: .space 64
 # - converts int to ascii for printing
