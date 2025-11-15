@@ -51,8 +51,13 @@ main:
 	syscall
 	
 	# call load_input_file(input_filename) to load matrix (exits on error)
-	la $a0, input_filename		# #a0 = address of input_filename
+	la $a0, input_filename		# $a0 = address of input_filename
 	jal load_input_file
+	
+	
+	
+	
+	
 	
 # Load input file
 # - $a0 points to the input file name
@@ -84,10 +89,15 @@ load_input_file:
 	move $s1, $v0			# $s0 = bytes read
 	blez $s1, matrix_error
 	# null terminate the buffer holding the header line
-	la $t0, line_buffer 
-	add $t0, $t0, $s1
-	sb  $zero, 0($v0) 		# store a NULL character
-
+	la $t0, line_buffer 		# $t0 = address of start of buffer
+	add $t0, $t0, $s1               # $t0 = address of start of buffer + bytes read to move past all chars read
+	sb  $zero, 0($t0) 		# store a NULL character
+	
+	# parse header tokens to count columns
+	la $t0, line_buffer
+	li $t1, 0			# initialize token count
+header_row_scan:
+	
 	
 	
 	
