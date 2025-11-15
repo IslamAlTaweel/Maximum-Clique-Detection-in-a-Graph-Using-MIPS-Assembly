@@ -30,10 +30,10 @@ newline: .asciiz "\n"
 
 # constants and arrays
 MAX_VERTICES .word 5 			# maximum allowable n number of vertices
-adj_matrix .space 100 		#(nxn ints for n <=5)
-current_subset .space 20
-max_clique_subset .space 20
-num_matrix_vertices .word 0
+adj_matrix .space 100 			#(nxn ints for n <=5) 5 * 5 * 4
+current_subset .space 20 		# 5 * 4
+max_clique_subset .space 20		# 5 * 4
+num_matrix_vertices .word 0	
 max_clique_size .word 0
 
 ################################# Code Segment ####################################
