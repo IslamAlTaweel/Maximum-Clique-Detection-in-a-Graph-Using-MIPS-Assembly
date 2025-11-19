@@ -17,7 +17,7 @@ output_filename: .asciiz  "output.txt"	#fixed output file
 line_buffer: .space 64
 
 # - converts int to ascii for printing
-int_string_buffer .space 40 
+int_string_buffer:	.space 40 
 
 # messages to display to user 
 input_prompt_msg: .asciiz "Please enter the adjacency matrix input file name:\n"
@@ -29,12 +29,12 @@ max_vertices_msg: .asciiz "Vertices in the Maximum Clique: "
 newline: .asciiz "\n"
 
 # constants and arrays
-MAX_VERTICES .word 5 			# maximum allowable n number of vertices
-adj_matrix .space 100 			#(nxn ints for n <=5) 5 * 5 * 4
-current_subset .space 20 		# 5 * 4
-max_clique_subset .space 20		# 5 * 4
-num_matrix_vertices .word 0	
-max_clique_size .word 0
+MAX_VERTICES: .word 5 			# maximum allowable n number of vertices
+adj_matrix: .space 100 			#(nxn ints for n <=5) 5 * 5 * 4
+current_subset: .space 20 		# 5 * 4
+max_clique_subset: .space 20		# 5 * 4
+num_matrix_vertices: .word 0	
+max_clique_size: .word 0
 
 ################################# Code Segment ####################################
 .text
@@ -103,13 +103,13 @@ header_row_scan:
 	
 	
 	
-file_error
+file_error:
 	la $a0, file_error_msg		# $a0 = address of file_error_msg string
 	li $v0, 4			# print file error message string
 	syscall
 	li $v0, 10			# exit program
 	syscall
-matrix_error
+matrix_error:
 	la $a0, matrix_error_msg	# $a0 = address of matrix_error_msg string
 	li $v0, 4			# print matrix error message string
 	syscall
