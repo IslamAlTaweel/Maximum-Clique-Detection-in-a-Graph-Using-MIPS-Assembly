@@ -49,10 +49,24 @@ main:
 	li $a1, 64			# $a1 = max string length
 	li $v0, 8			# read string 
 	syscall
-	
+	# strip newline from filename
+	la $t0, input_filename		#t0 = address of input_filename
+strip_newline:
+	lb $t1, 0($t0)			# $t1 = character at address in t0
+	beqz $t1, newline_strip_done	# if char is NULL its ready to branch to open file
+	li $t2, 10			# $t2 = ASCII value of newline
+	beq $t1, $t2, null_terminate	# if t2 = newline branch
+	li $t2, 13			# $t2 = ASCII value of newline
+	beq $t1, $t2, null_terminate
+	addi $t0, $t0, 1		# point to next char
+	j strip_newline			# loop back to check next char
+null_terminate:
+	sb $zero, 0($t0)		# make address ($t0) = 0
+newline_strip_done:		
 	# call load_input_file(input_filename) to load matrix (exits on error)
 	la $a0, input_filename		# $a0 = address of input_filename
-	jal load_input_file
+	jal load_input_file	
+	li $t0, 0	
 	
 	
 	
@@ -72,7 +86,7 @@ load_input_file:
 	sw $s3, 12($sp)
 	sw $s4, 8($sp)
 	sw $s5, 4($sp)
-	
+
 	# open the input file		# $a0 = address of the filename string
 	move $a1, $zero			# set flags to read only
 	li $v0, 13 			# Return file descriptor in $v0 (negative if error)
