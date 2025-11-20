@@ -14,7 +14,7 @@
 input_filename:  .space 64
 output_filename: .asciiz  "output.txt"	#fixed output file
 # - line buffer needed for reading 
-line_buffer: .space 64
+byte_buffer: .space 1
 
 # - converts int to ascii for printing
 int_string_buffer:	.space 40 
@@ -68,9 +68,8 @@ newline_strip_done:
 	jal load_input_file	
 	li $t0, 0	
 	
-	
-	
-	
+	li $v0, 10
+	syscall
 	
 	
 # Load input file
@@ -86,36 +85,92 @@ load_input_file:
 	sw $s3, 12($sp)
 	sw $s4, 8($sp)
 	sw $s5, 4($sp)
-
+	
 	# open the input file		# $a0 = address of the filename string
 	move $a1, $zero			# set flags to read only
 	li $v0, 13 			# Return file descriptor in $v0 (negative if error)
 	syscall
-	move $s0, $v0 			# $s0 = file descriptor
-	bltz $s0, file_error		# if $s0 < 0 true indicates an error in opening file 
-	
-	# read header line row of the matrix
+	move $s0, $v0			# $s0 = file descriptor
+	bltz $v0, file_error		# if $s0 < 0 true indicates an error in opening file 
+	#set counters
+	li $s1, 0			# s1 = row index 
+	li $s2, 0			# s2 = column count of current row
+	li $s3, -1			# s3 = expected columns (isto be set from n in row one)
+read_byte:
+	# read 1B from input file
 	move $a0, $s0 			# $a0 = file descriptor
-	la $a1, line_buffer   		# $a1 = address of input buffer
-	li $a2, 64			# $a2 = maximum number of characters to read
+	la $a1, byte_buffer   		# $a1 = address of input buffer
+	li $a2, 1			# $a2 = maximum number of characters to read
 	li $v0, 14			# Return number of characters read in $v0
 	syscall
-	move $s1, $v0			# $s0 = bytes read
-	blez $s1, matrix_error
-	# null terminate the buffer holding the header line
-	la $t0, line_buffer 		# $t0 = address of start of buffer
-	add $t0, $t0, $s1               # $t0 = address of start of buffer + bytes read to move past all chars read
-	sb  $zero, 0($t0) 		# store a NULL character
+	blez $v0, EOF_handler		# indicates error or EOF
+	# load byte read
+	la $t0, byte_buffer 		# $t0 = address of start of buffer
+	lb $t4, 0($t0)			# t4 = the byte
+	# ignore carriage return (ASCII 13)
+	li $t1, 13
+	beq $t4, $t1, read_byte
+	# if line feed (ASCII 10) we've reached end of the row
+	li $t1, 10
+	beq $t4, $t1, end_of_row
+	# ignore space (ASCII 32) or tab(ASCII 9)
+	li $t1, 32
+	beq $t4, $t1, read_byte
+	li $t1, 9
+	beq $t4, $t1, read_byte
+	# otherwise check if 0 or 1
+	li $t1, 48			# ASCII value for 0
+	sub $t2, $t4, $t1		# t2 = byte read - '0'
+	bltz $t2, matrix_error		# if byte isn't 0 or 1 handle error
+	li $t1, 1
+	bgt $t2, $t1, matrix_error	# if byte isn't 0 or 1 handle error
+	# else its a valid digit ( 0 or 1 )
+	addi $s2, $s2, 1		# increment column count of current row
+	j read_byte			# continue in row
+end_of_row:
+	# enters if newline was reached
+	# if 1st row set expected n 
+	li $t0, -1
+	beq $s3, $t0, set_expected_n	# if n is still unset go set it
+	# else if n is set compare column count in (s2) of current row with expected n in (s3)
+	beq $s2, $s3, valid_row
+	# else row consists invalid number of vertices
+	j matrix_error
+set_expected_n:
+	move $s3, $s2			# expected n = n of current row (the 1st row will only enter this)
+valid_row:
+	# current row found valid so move to next row to verify
+	addi $s1, $s1, 1		# increment row index (s1)
+	li $s2, 0			# reset column count of current row
+	j read_byte
+EOF_handler:
+	# v0 <=0 indicates EOF or error so check for verices
+	beqz $s2, EOF
+	# if vertices check last row (as doesnt have LF)
+	li $t0,-1
+	beq $s3, $t0 ,set_n_last_row
+	beq $s2, $s3, valid_final_row
 	
-	# parse header tokens to count columns
-	la $t0, line_buffer
-	li $t1, 0			# initialize token count
-header_row_scan:
-	
-	
-	
-	
-	
+	j exit
+set_n_last_row:
+	move $s3, $s2
+	addi $s1, $s1, 1
+	j done_all_rows
+valid_final_row:	
+	addi $s1, $s1, 1
+	j done_all_rows
+EOF:
+	j done_all_rows
+done_all_rows:
+	# s1 = num of rows and s3 = n verify nxn
+	li $t0, -1
+	beq $s3, $t0, matrix_error		# incase no rows found
+	# check if rows ,s1, = columns ,s3
+	move $t1, $s1
+	move $t2, $s3
+	bne $t1, $t2, matrix_error 		# not nxn
+	# if all valid exit and close file
+	j exit
 	
 file_error:
 	la $a0, file_error_msg		# $a0 = address of file_error_msg string
@@ -127,5 +182,8 @@ matrix_error:
 	la $a0, matrix_error_msg	# $a0 = address of matrix_error_msg string
 	li $v0, 4			# print matrix error message string
 	syscall
+	j exit
+exit:
 	li $v0, 10			# exit program
 	syscall
+	
