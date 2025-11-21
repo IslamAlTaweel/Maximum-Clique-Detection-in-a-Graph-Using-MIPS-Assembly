@@ -116,7 +116,7 @@ isClique:
 
     move $s2,$a0
 
-    # size 0 or 1 is always clique lol
+    # size 0 or 1 is always clique
     li $v0,1
     ble $s2,1,isClique_done
 
