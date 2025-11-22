@@ -179,7 +179,42 @@ done_all_rows:
 	move $t2, $s3
 	bne $t1, $t2, matrix_error 		# not nxn
 	# if all valid exit and close file
-	j exit
+	j check_symmetry
+	
+check_symmetry:
+	# s1 = row index
+	# s3 = column index (n)
+	move $t6, $s3			# t6 = n
+	li $t0, 0			# i = 0
+symmetric_i_loop:
+	bge $t0, $t6, symmetric
+	li $t1, 0		# j = 0
+symmetric_j_loop:
+	bge $t1, $t6, next_i
+	# load adj_matrix[i][j]
+	la $t2, adj_matrix
+	mul $t3, $t0, $t6	# row * n
+	add $t3, $t3, $t1	# (row * n) + column
+	sll $t3, $t3, 2 	# t3 * 4B offset
+	add $t3, $t2, $t3
+	lw $t4,0($t3)
+	# load adj_matrix[j][i]
+	la $t2, adj_matrix
+	mul $t3, $t1, $t6	# row = j
+	add $t3, $t3, $t0	# column = i
+	sll $t3, $t3, 2 	# t3 * 4B offset
+	add $t3, $t2, $t3
+	lw $t5,0($t3)
+	# if not symmetric handle error
+	bne $t4, $t5, matrix_error
+	addi $t1, $t1, 1 	# increment j if no error
+	j symmetric_j_loop
+next_i:
+	addi $t0, $t0, 1 		# increment i
+	j symmetric_i_loop
+symmetric:
+	# the matrix has been verified to be symmetric
+	j exit 
 	
 file_error:
 	la $a0, file_error_msg		# $a0 = address of file_error_msg string
