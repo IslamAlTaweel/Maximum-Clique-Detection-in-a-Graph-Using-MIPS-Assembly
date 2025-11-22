@@ -125,6 +125,15 @@ read_byte:
 	li $t1, 1
 	bgt $t2, $t1, matrix_error	# if byte isn't 0 or 1 handle error
 	# else its a valid digit ( 0 or 1 )
+	#store t2 (the matrix value) into adj_matrix
+	# calculates index = s1 * MAXV + s2 = row index * 5 + column
+	lw $t3, MAX_VERTICES		# t3 = MAXVERTICES = 5
+	mul $t4, $s1, $t3		# t4 = row * 5
+	add $t4, $t4, $s2		# t4 = row*5 + column
+	sll $t2, $t2, 2 		# 4B * integer
+	la $t5, adj_matrix		# base of matrix
+	add $t5, $t5, $t4
+	sw $t2, 0($t5)			# store matrix value
 	addi $s2, $s2, 1		# increment column count of current row
 	j read_byte			# continue in row
 end_of_row:
@@ -144,7 +153,7 @@ valid_row:
 	li $s2, 0			# reset column count of current row
 	j read_byte
 EOF_handler:
-	# v0 <=0 indicates EOF or error so check for verices
+	# v0 <=0 indicates EOF or error so check for vertices
 	beqz $s2, EOF
 	# if vertices check last row (as doesnt have LF)
 	li $t0,-1
