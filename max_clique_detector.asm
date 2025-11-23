@@ -5,7 +5,13 @@
 # - Flexible program for a matrix up to 5 vertices
 # - Adjacency matrix validation ( nxn , 0/1 entries , matrix symmetry )
 # - Brute force recursive approach to detect maximum clique
-# Input : Request adjacency matrix input file
+# Input : Request adjacency matrix input file with matrix such as sample matrix :
+	# matrix shouldn't have labels on rows or columns and is undirected (symmetric)
+	# 0 1 1 0 0
+	# 1 0 1 1 0
+	# 1 1 0 1 0
+	# 0 1 1 0 1
+	# 0 0 0 1 0
 # Output : Writes maximum clique size and its vertices to console and to output.txt
 ################################# Data Segment ####################################
 .data
@@ -25,7 +31,7 @@ file_error_msg: .asciiz "Error! Could not open input file!\n"
 matrix_error_msg: .asciiz "Error! Invalid Adjacency Matrix!\n"
 no_clique_msg: .asciiz "No clique found in the graph!\n"
 max_size_msg: .asciiz "Maximum Clique Size: "
-max_vertices_msg: .asciiz "Vertices in the Maximum Clique: "
+max_vertices_msg: .asciiz "\nVertices in the Maximum Clique: "
 newline: .asciiz "\n"
 
 # constants and arrays
@@ -65,8 +71,24 @@ null_terminate:
 newline_strip_done:		
 	# call load_input_file(input_filename) to load matrix (exits on error)
 	la $a0, input_filename		# $a0 = address of input_filename
-	jal load_input_file	
+	jal load_input_file
 	
+	# check that size of clique is at least 2 vertices	
+print_to_console:
+	# display output string of max clique size to console
+	la $a0, max_size_msg		# - $a0 = address of max_size_msg
+	li $v0, 4			# - print string max_size_msg
+	syscall
+	lw $a0, max_clique_size
+	li $v0, 1			# - print max_clique_size
+	syscall
+	# display output string of max clique vertices to console
+	la $a0, max_vertices_msg	# - $a0 = address of max_vertices_msg
+	li $v0, 4			# - print string max_vertices_msg
+	syscall
+	lw $a0, max_clique_subset
+	li $v0, 1			# - print  max_clique_subset
+	syscall
 exit:
 	li $v0, 10			# exit program
 	syscall
@@ -215,7 +237,7 @@ next_i:
 	j symmetric_i_loop
 symmetric:
 	# the matrix has been verified to be symmetric
-	j exit 
+	j  print_to_console
 	
 file_error:
 	la $a0, file_error_msg		# $a0 = address of file_error_msg string
