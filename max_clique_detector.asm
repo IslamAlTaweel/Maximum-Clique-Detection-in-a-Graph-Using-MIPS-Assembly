@@ -66,7 +66,6 @@ newline_strip_done:
 	# call load_input_file(input_filename) to load matrix (exits on error)
 	la $a0, input_filename		# $a0 = address of input_filename
 	jal load_input_file	
-	li $t0, 0	
 	
 	li $v0, 10
 	syscall
@@ -130,7 +129,7 @@ read_byte:
 	lw $t3, MAX_VERTICES		# t3 = MAXVERTICES = 5
 	mul $t4, $s1, $t3		# t4 = row * 5
 	add $t4, $t4, $s2		# t4 = row*5 + column
-	sll $t4, $t2, 2 		# 4B * integer
+	sll $t4, $t4, 2 		# *4 offset
 	la $t5, adj_matrix		# base of matrix
 	add $t5, $t5, $t4
 	sw $t2, 0($t5)			# store matrix value
@@ -188,7 +187,7 @@ check_symmetry:
 	move $t6, $s3			# t6 = n
 	li $t0, 0			# i = 0
 symmetric_i_loop:
-	bge $t0, $t6, symmetric
+	bge $t0, $t6, symmetric		# branch if finished with all rows
 	li $t1, 0		# j = 0
 symmetric_j_loop:
 	bge $t1, $t6, next_i
