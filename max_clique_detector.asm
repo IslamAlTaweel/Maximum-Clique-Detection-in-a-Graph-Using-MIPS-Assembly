@@ -67,7 +67,8 @@ newline_strip_done:
 	la $a0, input_filename		# $a0 = address of input_filename
 	jal load_input_file	
 	
-	li $v0, 10
+exit:
+	li $v0, 10			# exit program
 	syscall
 	
 	
@@ -226,7 +227,4 @@ matrix_error:
 	li $v0, 4			# print matrix error message string
 	syscall
 	j exit
-exit:
-	li $v0, 10			# exit program
-	syscall
-	
+
