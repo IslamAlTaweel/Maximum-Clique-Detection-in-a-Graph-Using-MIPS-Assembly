@@ -6,7 +6,7 @@
 # - Adjacency matrix validation ( nxn , 0/1 entries , matrix symmetry )
 # - Brute force recursive approach to detect maximum clique
 # Input : Request adjacency matrix input file with matrix such as sample matrix :
-	# matrix shouldn't have labels on rows or columns 
+	# matrix shouldn't have labels on rows or columns
 	# 0 1 1 0 0
 	# 1 0 1 1 0
 	# 1 1 0 1 0
@@ -18,7 +18,7 @@
 # I/O buffers
 # - buffers needed for file names
 input_filename:  .space 64
-output_filename: .asciiz  "output.txt"	#fixed output file
+output_filename: .asciiz  "output.txt"	# fixed output file
 # - line buffer needed for reading 
 byte_buffer: .space 1
 
@@ -28,6 +28,7 @@ int_string_buffer:	.space 40
 # messages to display to user 
 input_prompt_msg: .asciiz "Please enter the adjacency matrix input file name:\n"
 file_error_msg: .asciiz "Error! Could not open input file!\n"
+output_file_error_msg: .asciiz "Error! Could not open output file!\n"
 matrix_error_msg: .asciiz "Error! Invalid Adjacency Matrix!\n"
 no_clique_msg: .asciiz "No clique found in the graph!\n"
 max_size_msg: .asciiz "Maximum Clique Size: "
@@ -72,8 +73,8 @@ newline_strip_done:
 	# call load_input_file(input_filename) to load matrix (exits on error)
 	la $a0, input_filename		# $a0 = address of input_filename
 	jal load_input_file
-	
 	# check that size of clique is at least 2 vertices	
+	
 print_to_console:
 	# display output string of max clique size to console
 	la $a0, max_size_msg		# - $a0 = address of max_size_msg
@@ -89,9 +90,100 @@ print_to_console:
 	lw $a0, max_clique_subset
 	li $v0, 1			# - print  max_clique_subset
 	syscall
+	j print_to_file
+print_to_file:	
+	la $a0, output_filename		# filename pointer
+	li $a1, 1
+	li $a2, 0
+	li $v0,13
+	syscall				# open the output file
+	move $s6, $v0			# s6  = file descriptor
+	bltz $s6, output_file_error
+	
+	# set arguments of system call to write to file
+	# write Maximum clique size string message to file
+	move $a0, $s6			# a0 = file descriptor
+	la $a1, max_size_msg		# - $a1 = address of max_vertices_msg
+	li $a2, 22			# length of the string (num of chars to write)
+	li $v0, 15			# write to file 
+	syscall
+	# write the actual max clique size value 
+	lw $t7, max_clique_size		# load value
+	move $a0, $t7
+	jal int_to_string		# convert to ASCII
+	move $a1, $v0			# return pointer
+	# compute string length
+	move $t0, $v0
+length_loop:
+	lb $t1, 0($t0)
+	beqz  $t1, length_done
+	addi $t0, $t0,1
+	j length_loop
+length_done:
+	sub $a2, $t0, $v0		# the length of the string
+	move $a0, $s6			# a0 = file desciptor
+	li $v0, 15			# print max clique value to file
+	syscall
+	# write max clique vertices message to the output file
+	move $a0, $s6
+	la $a1, max_vertices_msg
+	li $a2, 33			# length of the message 
+	li $v0, 15			# write to file
+	syscall
+# write max clique vertices
+	lw $t7, max_clique_subset
+	move $a0, $t7
+	jal int_to_string
+	move $a1, $v0
+	# compute string length
+	move $t0, $v0
+length_loop_v:
+	lb $t1, 0($t0)
+	beqz  $t1, length_done_v
+	addi $t0, $t0,1
+	j length_loop_v
+length_done_v:
+	sub $a2, $t0, $v0		# the length of the string
+	move $a0, $s6			# a0 = file desciptor
+	li $v0, 15			# print max clique value to file
+	syscall
+	#close output file
+	blez $s6, skip_close
+	move $a0, $s6
+	li $v0,16
+	syscall
+skip_close:
+	
 exit:
 	li $v0, 10			# exit program
 	syscall
+	
+output_file_error:
+	la $a0, output_file_error_msg
+	li $v0, 4
+	syscall
+	j exit
+	
+int_to_string:
+	la $t0, int_string_buffer
+	addi $t0, $t0, 39		# move to end of the buffer
+	sb $zero, ($t0)			# null terminate
+	addi $t0, $t0, -1
+int_to_string_loop:
+	beqz $a0, int_to_string_finished
+	li $t1, 10
+	div $a0, $t1
+	mfhi $t2		# remainder reg
+	mflo $a0		# quotient
+	addi $t2, $t2, 48	# convert to ASCII
+	sb $t2, 0($t0)
+	addi $t0, $t0, -1
+	j int_to_string_loop
+int_to_string_finished:
+	addi $t0,$t0, 1
+	move $v0, $t0		# return pointer to start of the string
+	jr $ra			# return to caller
+
 	
 	
 # Load input file
