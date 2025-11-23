@@ -6,7 +6,7 @@
 # - Adjacency matrix validation ( nxn , 0/1 entries , matrix symmetry )
 # - Brute force recursive approach to detect maximum clique
 # Input : Request adjacency matrix input file with matrix such as sample matrix :
-	# matrix shouldn't have labels on rows or columns and is undirected (symmetric)
+	# matrix shouldn't have labels on rows or columns 
 	# 0 1 1 0 0
 	# 1 0 1 1 0
 	# 1 1 0 1 0
