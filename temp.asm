@@ -97,7 +97,8 @@ subset_cleared_init:
 print_to_console:
 # check if clique found
 	lw $t0, max_clique_size
-	ble $t0, $zero, handle_no_clique
+	li $t1, 1
+	ble $t0, $t1, handle_no_clique
 	# display output string of max clique size to console
 	la $a0, max_size_msg		# - $a0 = address of max_size_msg
 	li $v0, 4			# - print string max_size_msg
@@ -119,6 +120,9 @@ console_vertex_loop:
 	lw $a0, 0($t3)
 	li $v0, 1			# - print  integer
 	syscall
+	la $a0, space
+	li $v0,4
+	syscall
 	addi $t0, $t0, 1
 	j console_vertex_loop
 console_vertex_done:
@@ -127,6 +131,12 @@ handle_no_clique:
 	la $a0, no_clique_msg
 	li $v0,4
 	syscall
+	move $a0, $s6
+	la $a1, no_clique_msg
+	li $a2, 40
+	li $v0, 15
+	syscall
+	j exit
 	j print_to_file
 print_to_file:	
 	la $a0, output_filename		# filename pointer
@@ -146,17 +156,18 @@ print_to_file:
 	syscall
 	# write the actual max clique size value 
 	lw $t7, max_clique_size		# load value
+	ble $t7, 1 , handle_no_clique
 	move $a0, $t7
 	jal int_to_string		# convert to ASCII
 	move $a1, $v0			# return pointer
 	# compute string length
 	move $t0, $v0
-length_loop_s:
+length_loop:
 	lb $t1, 0($t0)
-	beqz  $t1, length_done_s
+	beqz  $t1, length_done
 	addi $t0, $t0,1
-	j length_loop_s
-length_done_s:
+	j length_loop
+length_done:
 	sub $a2, $t0, $v0		# the length of the string
 	move $a0, $s6			# a0 = file desciptor
 	li $v0, 15			# print max clique value to file
@@ -175,10 +186,10 @@ vertex_print_loop:
 	bge $t0, $t1, end_vertex_print
 	sll $t3, $t0, 2
 	add $t3, $t2, $t3
-	la $t4, 0($t3)
-	move $a0, $t4
+	lw $a0, 0($t3)
 	jal int_to_string
 	move $a1, $v0		# a1 = address of string buffer
+	
 	# compute string length
 	move $t5, $v0		# t5 = start of string
 length_loop_v:
@@ -191,12 +202,7 @@ length_done_v:
 	move $a0, $s6			# a0 = file desciptor
 	li $v0, 15			# print max clique value to file
 	syscall
-	move $a0, $s6
-	la $a1, space
-	li $a2, 1
-	li $v0, 15
-	syscall
-	addi $t0, $t0,1
+	
 	j vertex_print_loop
 end_vertex_print:
 	#close output file
@@ -205,6 +211,7 @@ end_vertex_print:
 	li $v0,16
 	syscall
 skip_close:
+
 	
 exit:
 	li $v0, 10			# exit program
