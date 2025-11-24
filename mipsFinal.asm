@@ -1,9 +1,9 @@
 .data
-adjMatrix:    .word   0,1,1,1,1,
-                      1,0,1,1,1,
-                      1,1,0,1,1,
-                      1,1,1,0,1,
-                      1,1,1,1,0
+adjMatrix:    .word   0,0,0,0,0,
+                      0,0,1,1,1,
+                      0,1,0,1,1,
+                      0,1,1,0,1,
+                      0,1,1,1,0
 currentSubset:    .word 0,0,0,0,0
 maxCliqueSubset:  .word 0,0,0,0,0
 maxCliqueSize:    .word 0
@@ -27,11 +27,7 @@ main:
     # reset max clique to 0
     sw $zero,maxCliqueSize
     
-    lw $t0,numVertices      # total vertices
-    li $t1,0                # start from vertex 0
-
-main_loop:
-    bge $t1,$t0,print_result
+   
 
     # clear currentSubset before each run
     la $t2,currentSubset
@@ -46,17 +42,11 @@ clear_subset:
     j clear_subset
 
 subset_cleared:
-    # start the subset with the chosen vertex
-    la $t2,currentSubset
-    sw $t1,0($t2)
-
-    # try building cliques starting from t1
-    move $a0,$t1
-    li $a1,1          # size = 1 (one vertex so far)
+ 
+    li $a0, -1
+    li $a1,0          # size = 1 (one vertex so far)
     jal findMaxClique
 
-    addi $t1,$t1,1
-    j main_loop
 
 print_result:
     # print size of max clique
@@ -225,10 +215,15 @@ findMax_vertex_loop:
     sll $t2,$s1,2
     add $t3,$t1,$t2
     sw $s6,0($t3)
+    move $a0, $s1
+    addi $a0, $a0,1
+    jal isClique
+    beq $v0, $zero, findMax_next_vertex
 
     move $a0,$s6
     addi $a1,$s1,1
     jal findMaxClique
+findMax_next_vertex:
 
     addi $s6,$s6,1
     j findMax_vertex_loop
