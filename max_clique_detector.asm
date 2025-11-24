@@ -97,7 +97,8 @@ subset_cleared_init:
 print_to_console:
 # check if clique found
 	lw $t0, max_clique_size
-	ble $t0, $zero, handle_no_clique
+	li $t1, 1
+	ble $t0, $t1, handle_no_clique
 	# display output string of max clique size to console
 	la $a0, max_size_msg		# - $a0 = address of max_size_msg
 	li $v0, 4			# - print string max_size_msg
@@ -130,6 +131,12 @@ handle_no_clique:
 	la $a0, no_clique_msg
 	li $v0,4
 	syscall
+	move $a0, $s6
+	la $a1, no_clique_msg
+	li $a2, 40
+	li $v0, 15
+	syscall
+	j exit
 	j print_to_file
 print_to_file:	
 	la $a0, output_filename		# filename pointer
