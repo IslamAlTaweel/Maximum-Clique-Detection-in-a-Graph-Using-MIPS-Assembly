@@ -288,6 +288,7 @@ EOF:
 	j done_all_rows
 done_all_rows:
 	# s1 = num of rows and s3 = n verify nxn
+	sw $s1, num_matrix_vertices
 	li $t0, -1
 	beq $s3, $t0, matrix_error		# incase no rows found
 	# check if rows ,s1, = columns ,s3
