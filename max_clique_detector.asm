@@ -119,6 +119,9 @@ console_vertex_loop:
 	lw $a0, 0($t3)
 	li $v0, 1			# - print  integer
 	syscall
+	la $a0, space
+	li $v0,4
+	syscall
 	addi $t0, $t0, 1
 	j console_vertex_loop
 console_vertex_done:
@@ -175,8 +178,7 @@ vertex_print_loop:
 	bge $t0, $t1, end_vertex_print
 	sll $t3, $t0, 2
 	add $t3, $t2, $t3
-	la $t4, 0($t3)
-	move $a0, $t4
+	lw $t4, 0($t3)
 	jal int_to_string
 	move $a1, $v0		# a1 = address of string buffer
 	# compute string length
