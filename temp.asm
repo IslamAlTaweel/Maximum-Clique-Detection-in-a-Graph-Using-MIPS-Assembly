@@ -40,9 +40,9 @@ space: .asciiz " "
 MAX_VERTICES: .word 5 			# maximum allowable n number of vertices
 adj_matrix: .space 100 			#(nxn ints for n <=5) 5 * 5 * 4
 current_subset: .space 20 		# 5 * 4
-max_clique_subset: .word 1,2,3		# 5 * 4
+max_clique_subset: .space 20		# 5 * 4
 num_matrix_vertices: .word 0	
-max_clique_size: .word 3
+max_clique_size: .word 0
 
 
 ################################# Code Segment ####################################
@@ -75,9 +75,29 @@ newline_strip_done:
 	# call load_input_file(input_filename) to load matrix (exits on error)
 	la $a0, input_filename		# $a0 = address of input_filename
 	jal load_input_file
-	# check that size of clique is at least 2 vertices	
+	lw $t0, num_matrix_vertices	
+	ble $t0, $zero,print_to_console
+
+	la $t2, current_subset
+	li $t3,0
+	lw $t4, num_matrix_vertices
+clear_subset_init:
+	bge $t3, $t4, subset_cleared_init
+	sll $t5, $t3, 2
+	add $t6, $t2, $t5
+	sw $zero, 0($t6)
+	addi $t3, $t3, 1
+	j clear_subset_init
+subset_cleared_init:
+	
+   	li $a0, -1
+    	li $a1,0          # size = 1 (one vertex so far)
+    	jal findMaxClique	
 	
 print_to_console:
+# check if clique found
+	lw $t0, max_clique_size
+	ble $t0, $zero, handle_no_clique
 	# display output string of max clique size to console
 	la $a0, max_size_msg		# - $a0 = address of max_size_msg
 	li $v0, 4			# - print string max_size_msg
@@ -103,6 +123,11 @@ console_vertex_loop:
 	j console_vertex_loop
 console_vertex_done:
 	j print_to_file
+handle_no_clique:
+	la $a0, no_clique_msg
+	li $v0,4
+	syscall
+	j print_to_file
 print_to_file:	
 	la $a0, output_filename		# filename pointer
 	li $a1, 1
@@ -126,12 +151,12 @@ print_to_file:
 	move $a1, $v0			# return pointer
 	# compute string length
 	move $t0, $v0
-length_loop:
+length_loop_s:
 	lb $t1, 0($t0)
-	beqz  $t1, length_done
+	beqz  $t1, length_done_s
 	addi $t0, $t0,1
-	j length_loop
-length_done:
+	j length_loop_s
+length_done_s:
 	sub $a2, $t0, $v0		# the length of the string
 	move $a0, $s6			# a0 = file desciptor
 	li $v0, 15			# print max clique value to file
@@ -165,6 +190,11 @@ length_done_v:
 	sub $a2, $t5, $v0		# the length of the string
 	move $a0, $s6			# a0 = file desciptor
 	li $v0, 15			# print max clique value to file
+	syscall
+	move $a0, $s6
+	la $a1, space
+	li $a2, 1
+	li $v0, 15
 	syscall
 	addi $t0, $t0,1
 	j vertex_print_loop
@@ -202,6 +232,16 @@ int_to_string_loop:
 	addi $t0, $t0, -1
 	j int_to_string_loop
 int_to_string_finished:
+# if a0 = 0
+	li $t1, 48
+	lw $t3, max_clique_size
+	bne $t3, $zero, not_zero_clique_size
+	lb $t3,input_filename
+	bnez $t3,not_zero_clique_size
+	lb $t3, 0($t0)
+	bnez $t3,not_zero_clique_size
+	sb $t1, 0($t0)
+not_zero_clique_size:
 	addi $t0,$t0, 1
 	move $v0, $t0		# return pointer to start of the string
 	jr $ra			# return to caller
@@ -352,7 +392,15 @@ next_i:
 	j symmetric_i_loop
 symmetric:
 	# the matrix has been verified to be symmetric
-	j  print_to_console
+	lw $ra, 28($sp)  		# save register values
+	lw $s0, 24($sp)
+	lw $s1, 20($sp)
+	lw $s2, 16($sp)
+	lw $s3, 12($sp)
+	lw $s4, 8($sp)
+	lw $s5, 4($sp)
+	addiu $sp, $sp, 32 
+	jr $ra
 	
 file_error:
 	la $a0, file_error_msg		# $a0 = address of file_error_msg string
@@ -364,3 +412,146 @@ matrix_error:
 	li $v0, 4			# print matrix error message string
 	syscall
 	j exit
+isClique:
+    addi $sp,$sp,-16
+    sw $ra,12($sp)
+    sw $s0,8($sp)
+    sw $s1,4($sp)
+    sw $s2,0($sp)
+
+    move $s2,$a0
+
+    # size 0 or 1 is always clique
+    li $v0,1
+    ble $s2,1,isClique_done
+
+    li $s0,0           # i index
+isClique_outer:
+    addi $t0,$s2,-1
+    bge $s0,$t0,isClique_yes
+
+    la $t1,current_subset
+    sll $t2,$s0,2
+    add $t3,$t1,$t2
+    lw $s1,0($t3)      # vertex i
+
+    addi $s3,$s0,1     # j = i+1
+isClique_inner:
+    bge $s3,$s2,isClique_next_i
+
+    sll $t2,$s3,2
+    add $t3,$t1,$t2
+    lw $t4,0($t3)      # vertex j
+
+    # check if adj[i][j] = 1
+    la $t5,adj_matrix
+    lw $t6,num_matrix_vertices
+    mult $s1,$t6
+    mflo $t7
+    add $t7,$t7,$t4
+    sll $t7,$t7,2
+    add $t8,$t5,$t7
+    lw $t9,0($t8)
+
+    beq $t9,$zero,isClique_no
+
+    addi $s3,$s3,1
+    j isClique_inner
+
+isClique_next_i:
+    addi $s0,$s0,1
+    j isClique_outer
+
+isClique_yes:
+    li $v0,1
+    j isClique_done
+
+isClique_no:
+    li $v0,0
+
+isClique_done:
+    lw $ra,12($sp)
+    lw $s0,8($sp)
+    lw $s1,4($sp)
+    lw $s2,0($sp)
+    addi $sp,$sp,16
+    jr $ra
+
+
+# tries to extend the current subset into bigger cliques
+findMaxClique:
+    addi $sp,$sp,-36
+    sw $ra,32($sp)
+    sw $s0,28($sp)
+    sw $s1,24($sp)
+    sw $s2,20($sp)
+    sw $s3,16($sp)
+    sw $s4,12($sp)
+    sw $s5,8($sp)
+    sw $s6,4($sp)
+
+    move $s0,$a0     # last vertex
+    move $s1,$a1     # current size
+
+    move $a0,$s1
+    jal isClique
+    beq $v0,$zero,findMax_done   # if it's not a clique, stop
+
+    # update max clique if this one is bigger
+    la $s2,max_clique_size
+    lw $s3,0($s2)
+    ble $s1,$s3,findMax_continue
+
+    sw $s1,0($s2)
+
+    # copy currentSubset into maxCliqueSubset
+    la $s4,current_subset
+    la $s5,max_clique_subset
+    li $s6,0
+
+copy_max_loop:
+    bge $s6,$s1,findMax_continue
+    sll $t0,$s6,2
+    add $t1,$s4,$t0
+    lw $t2,0($t1)
+    add $t3,$s5,$t0
+    sw $t2,0($t3)
+    addi $s6,$s6,1
+    j copy_max_loop
+
+findMax_continue:
+    addi $s6,$s0,1     # try next vertices
+
+findMax_vertex_loop:
+    lw $t0,num_matrix_vertices
+    bge $s6,$t0,findMax_done
+
+    la $t1,current_subset
+    sll $t2,$s1,2
+    add $t3,$t1,$t2
+    sw $s6,0($t3)
+    
+    move $a0, $s1
+    addi $a0, $a0,1
+    jal isClique
+    beq $v0, $zero, findMax_next_vertex
+
+    move $a0,$s6
+    addi $a1,$s1,1
+    jal findMaxClique
+findMax_next_vertex:
+
+    addi $s6,$s6,1
+    j findMax_vertex_loop
+
+findMax_done:
+    lw $ra,32($sp)
+    lw $s0,28($sp)
+    lw $s1,24($sp)
+    lw $s2,20($sp)
+    lw $s3,16($sp)
+    lw $s4,12($sp)
+    lw $s5,8($sp)
+    lw $s6,4($sp)
+    addi $sp,$sp,36
+    jr $ra
