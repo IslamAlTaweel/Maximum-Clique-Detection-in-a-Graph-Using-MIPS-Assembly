@@ -100,7 +100,7 @@ console_vertex_loop:
 	li $v0, 1			# - print  integer
 	syscall
 	addi $t0, $t0, 1
-	bge $t0, $t1, console_vertex_loop
+	j console_vertex_loop
 console_vertex_done:
 	j print_to_file
 print_to_file:	
@@ -144,7 +144,7 @@ length_done:
 	syscall
 # write max clique vertices
 	lw $t1, max_clique_size
-	lw $t2, max_clique_subset
+	la $t2, max_clique_subset
 	li $t0,0 			# loop index = 0
 vertex_print_loop:
 	bge $t0, $t1, end_vertex_print
