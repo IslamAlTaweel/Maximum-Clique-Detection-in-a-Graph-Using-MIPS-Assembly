@@ -37,7 +37,7 @@ newline: .asciiz "\n"
 space: .asciiz " "
 
 # constants and arrays
-MAX_VERTICES: .word 4 			# maximum allowable n number of vertices
+MAX_VERTICES: .word 5 			# maximum allowable n number of vertices
 adj_matrix: .space 100 			#(nxn ints for n <=5) 5 * 5 * 4
 current_subset: .space 20 		# 5 * 4
 max_clique_subset: .space 20		# 5 * 4
@@ -374,7 +374,7 @@ done_all_rows:
 check_symmetry:
 	# s1 = row index
 	# s3 = column index (n)
-	move $t6, $s3			# t6 = n
+	lw $t6, MAX_VERTICES			
 	li $t0, 0			# i = 0
 symmetric_i_loop:
 	bge $t0, $t6, symmetric		# branch if finished with all rows
@@ -457,7 +457,7 @@ isClique_inner:
 
     # check if adj[i][j] = 1
     la $t5,adj_matrix
-    lw $t6,num_matrix_vertices
+    lw $t6,MAX_VERTICES
     mult $s1,$t6
     mflo $t7
     add $t7,$t7,$t4
