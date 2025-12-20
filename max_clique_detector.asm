@@ -37,7 +37,7 @@ newline: .asciiz "\n"
 space: .asciiz " "
 
 # constants and arrays
-MAX_VERTICES: .word 5 			# maximum allowable n number of vertices
+MAX_VERTICES: .word 4 			# maximum allowable n number of vertices
 adj_matrix: .space 100 			#(nxn ints for n <=5) 5 * 5 * 4
 current_subset: .space 20 		# 5 * 4
 max_clique_subset: .space 20		# 5 * 4
@@ -224,6 +224,8 @@ output_file_error:
 	j exit
 	
 int_to_string:
+	addi $sp, $sp,-4
+	sw $a0,0($sp)
 	la $t0, int_string_buffer
 	addi $t0, $t0, 39		# move to end of the buffer
 	sb $zero, ($t0)			# null terminate
@@ -248,6 +250,9 @@ int_to_string_finished:
 	lb $t3, 0($t0)
 	bnez $t3,not_zero_clique_size
 	sb $t1, 0($t0)
+	lw $a0,0($sp)
+	addi $sp,$sp,4
+	jr $ra
 not_zero_clique_size:
 	addi $t0,$t0, 1
 	move $v0, $t0		# return pointer to start of the string
